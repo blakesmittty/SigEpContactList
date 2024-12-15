@@ -1,0 +1,10 @@
+admin account with information i will pass down.
+they select the spreadsheet to hook up to the contact list and may have to specify the name of the needed columns
+	may look like vp comms login button
+
+automate sheet retrieval (naming convention for census is census_??/??/????) 
+
+account that is always able to access the drive
+	provide documentation for the google cloud console here
+
+comms folder id = 0B1y1z-eodsR-flZyTFhSZ3N4ZXJiMzVYVzJQUXZOYTl4RTN6a0FnUlVaSWd0YUFFd2FyaWs

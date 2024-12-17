@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
+	"unicode"
 
 	"github.com/joho/godotenv"
 	"google.golang.org/api/drive/v3"
@@ -12,6 +14,7 @@ import (
 	"google.golang.org/api/sheets/v4"
 )
 
+// defines the structure of a contact
 type Contact struct {
 	FirstName   string
 	LastName    string
@@ -19,55 +22,49 @@ type Contact struct {
 	Email       string
 }
 
-// func determineSemester() string {
-// 	var semester string
+// slice of contacts to be handed to the client side
+var contacts []Contact
 
-// 	currentTime := time.Now()
-// 	month := currentTime.Month()
-// 	year := currentTime.Year() - 2000 // stops working in the year 2100 lol
+// parseGoogleDrive searches the "Communication" folder within the google drive
+// and finds the most recent spreadsheets containing the word "Census", implying that
+// this is in fact the most recent census we need to pull data from
+func parseGoogleDrive() {
 
-// 	if month >= time.August && month <= time.December {
-// 		semester = "AU"
-// 	} else {
-// 		semester = "SP"
-// 	}
-
-// 	semester += strconv.Itoa(year)
-
-// 	fmt.Printf("Sem: %v\n", semester)
-
-// 	return semester
-// }
-
-func initGoogleDriveClient() {
+	// get the application credentials for the service account in the google drive
 	serviceAccKey := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
 
 	ctx := context.Background()
 
+	// hook up to the communications folder
 	driveService, err := drive.NewService(ctx, option.WithCredentialsFile(serviceAccKey))
 	if err != nil {
 		log.Fatal("couldn't create google drive client")
 	}
 
+	// narrow down our search and list only spreadsheets with the word "Census" and order by recency of creation
 	r, err := driveService.Files.List().Q("mimeType = 'application/vnd.google-apps.spreadsheet' and name contains 'Census'").OrderBy("createdTime desc").Do()
 	if err != nil {
 		log.Fatal("error retrieving files")
 	}
 
+	// for debugging
 	for _, file := range r.Files {
 		fmt.Printf("Found file: %s (%s)\n", file.Name, file.Id)
 
 	}
+	//----------------------------------------------------------
 
+	// this must be the most recent census
 	mostRecentCensusId := r.Files[0].Id
 	fmt.Printf("most recent: %v\n", mostRecentCensusId)
 
-	initGoogleSheetsClient(mostRecentCensusId, ctx, serviceAccKey)
+	gatherContacts(mostRecentCensusId, ctx, serviceAccKey)
 
 }
 
-func initGoogleSheetsClient(censusId string, ctx context.Context, serviceAccKey string) {
-	var contacts []Contact
+// gatherContacts parses the most recent census and gathers first names, last names, emails, and phone numbers.
+// it then returns a slice of contacts to be sent to the client
+func gatherContacts(censusId string, ctx context.Context, serviceAccKey string) {
 
 	sheetsService, err := sheets.NewService(ctx, option.WithCredentialsFile(serviceAccKey))
 	if err != nil {
@@ -89,20 +86,33 @@ func initGoogleSheetsClient(censusId string, ctx context.Context, serviceAccKey 
 		}
 
 		contacts = append(contacts, Contact{
-			FirstName:   row[0].(string),
-			LastName:    row[1].(string),
-			PhoneNumber: row[4].(string),
-			Email:       row[5].(string),
+			FirstName:   strings.TrimSpace(row[0].(string)),
+			LastName:    strings.TrimSpace(row[1].(string)),
+			PhoneNumber: formatPhoneNumber(row[4].(string)),
+			Email:       strings.TrimSpace(row[5].(string)),
 		})
 	}
 
+	//debugging
 	fmt.Printf("contacts: %v\n", contacts)
 
 }
 
-// func getContacts(w http.ResponseWriter, r *http.Request) {
+// for a .vcf file phone numbers must be formatted as (xxx) xxx-xxxx
+// which is how it will be returned
+func formatPhoneNumber(phoneNumber string) string {
+	var cleanedNumber string
 
-// }
+	for _, char := range phoneNumber {
+		if unicode.IsNumber(char) {
+			cleanedNumber += string(char)
+		}
+	}
+
+	formattedNumber := fmt.Sprintf("(%s) %s-%s", cleanedNumber[0:3], cleanedNumber[3:6], cleanedNumber[6:10])
+
+	return formattedNumber
+}
 
 func main() {
 	err := godotenv.Load()
@@ -110,6 +120,6 @@ func main() {
 		log.Fatal("Couldn't load .env")
 	}
 
-	initGoogleDriveClient()
+	parseGoogleDrive()
 
 }

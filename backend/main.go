@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 	"unicode"
@@ -16,10 +18,10 @@ import (
 
 // defines the structure of a contact
 type Contact struct {
-	FirstName   string
-	LastName    string
-	PhoneNumber string
-	Email       string
+	FirstName   string `json:"FirstName"`
+	LastName    string `json:"LastName"`
+	PhoneNumber string `json:"PhoneNumber"`
+	Email       string `json;"Email"`
 }
 
 // slice of contacts to be handed to the client side
@@ -114,6 +116,30 @@ func formatPhoneNumber(phoneNumber string) string {
 	return formattedNumber
 }
 
+func validateAccess(w http.ResponseWriter, r *http.Request) bool {
+	referer := r.Referer()
+	if referer == "" || !strings.Contains(referer, "canvas") {
+		http.Error(w, "Unauthorized access", http.StatusForbidden)
+		return false
+	}
+	return true
+}
+
+func getContacts(w http.ResponseWriter, r *http.Request) {
+
+	// if !validateAccess(w, r) {
+	//     return
+	// }
+
+	w.Header().Set("Content-Type", "application/json")
+
+	err := json.NewEncoder(w).Encode(contacts)
+	if err != nil {
+		http.Error(w, "couldn't encode contacts", http.StatusInternalServerError)
+		log.Printf("error encoding and sending contacts to client: %v", err)
+	}
+}
+
 func main() {
 	err := godotenv.Load()
 	if err != nil {
@@ -121,5 +147,10 @@ func main() {
 	}
 
 	parseGoogleDrive()
+
+	//mux := http.NewServeMux()
+
+	log.Println("Server running on http://localhost:8080")
+	log.Fatal(http.ListenAndServe(":8080", nil))
 
 }

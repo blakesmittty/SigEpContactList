@@ -10,6 +10,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/gorilla/handlers"
 	"github.com/joho/godotenv"
 	"google.golang.org/api/drive/v3"
 	"google.golang.org/api/option"
@@ -147,10 +148,20 @@ func main() {
 	}
 
 	parseGoogleDrive()
+	fmt.Printf("Contacts after parseGoogleDrive call: %v", contacts)
 
-	//mux := http.NewServeMux()
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/contacts", getContacts)
+
+	corsHandler := handlers.CORS(
+		handlers.AllowedOrigins([]string{"http://localhost:3000"}),
+		handlers.AllowedMethods([]string{"GET", "POST", "OPTIONS"}),
+		handlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
+		handlers.AllowCredentials(),
+	)(mux)
 
 	log.Println("Server running on http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":8080", corsHandler))
 
 }

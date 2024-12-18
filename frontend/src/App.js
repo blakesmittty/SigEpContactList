@@ -15,13 +15,21 @@ function App() {
   useEffect(() => {
     const fetchContacts = async() => {
       try {
-        
+        const resp = await fetch("http://localhost:8080/contacts");
+        if (!resp.ok) {
+          throw new Error("Error fetching contacts")
+        }
+        const data = await resp.json();
+        console.log("data: ", data)
+        setContacts(data);
       } catch (error) {
           setError(error.Message);
       } finally {
-
+          setLoading(false);
       }
     };
+
+    fetchContacts();
   },[]);
 
   const handleSearch = (brotherName) => {
@@ -38,34 +46,16 @@ function App() {
       <Header></Header>
       {/* Content Placeholder */}
       <div className="w-full p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 lg:gap-7 gap-2 place-items-stretch pb-[200px]">
-        <Contact name={"blake"} phoneNumber={"5555555555"} email={"blakeas12@gmail.com"} />
-        <Contact name={"blake"} phoneNumber={"5555555555"} email={"blakeas12@gmail.com"} />
-        <Contact name={"blake"} phoneNumber={"5555555555"} email={"blakeas12@gmail.com"} />
-        <Contact name={"blake"} phoneNumber={"5555555555"} email={"blakeas12@gmail.com"} />
-        <Contact name={"blake"} phoneNumber={"5555555555"} email={"blakeas12@gmail.com"} />
-        <Contact name={"blake"} phoneNumber={"5555555555"} email={"blakeas12@gmail.com"} />
-        <Contact name={"blake"} phoneNumber={"5555555555"} email={"blakeas12@gmail.com"} />
-        <Contact name={"abdallah hinawwi"} phoneNumber={"5555555555"} email={"blakeas12@gmail.com"} />
-        <Contact name={"blake"} phoneNumber={"5555555555"} email={"blakeas12@gmail.com"} />
-        <Contact name={"blake"} phoneNumber={"5555555555"} email={"blakeas12@gmail.com"} />
-        <Contact name={"blake"} phoneNumber={"5555555555"} email={"blakeas12@gmail.com"} />
-        <Contact name={"blake"} phoneNumber={"5555555555"} email={"blakeas12@gmail.com"} />
-        <Contact name={"blake"} phoneNumber={"5555555555"} email={"blakeas12@gmail.com"} />
-        <Contact name={"blake"} phoneNumber={"5555555555"} email={"blakeas12@gmail.com"} />
-        <Contact name={"blake"} phoneNumber={"5555555555"} email={"blakeas12@gmail.com"} />
-        <Contact name={"blake"} phoneNumber={"5555555555"} email={"blakeas12@gmail.com"} />
-        <Contact name={"blake"} phoneNumber={"5555555555"} email={"blakeas12@gmail.com"} />
-        <Contact name={"blake"} phoneNumber={"5555555555"} email={"blakeas12@gmail.com"} />
-        <Contact name={"blake"} phoneNumber={"5555555555"} email={"blakeas12@gmail.com"} />
-        <Contact name={"blake"} phoneNumber={"5555555555"} email={"blakeas12@gmail.com"} />
-        <Contact name={"blake"} phoneNumber={"5555555555"} email={"blakeas12@gmail.com"} />
-        <Contact name={"blake"} phoneNumber={"5555555555"} email={"blakeas12@gmail.com"} />
-        <Contact name={"blake"} phoneNumber={"5555555555"} email={"blakeas12@gmail.com"} />
-        <Contact name={"blake"} phoneNumber={"5555555555"} email={"blakeas12@gmail.com"} />
-        <Contact name={"blake"} phoneNumber={"5555555555"} email={"blakeas12@gmail.com"} />
-        <Contact name={"blake"} phoneNumber={"5555555555"} email={"blakeas12@gmail.com"} />
-        <Contact name={"blake"} phoneNumber={"5555555555"} email={"blakeas12@gmail.com"} />
-        <Contact name={"blake"} phoneNumber={"5555555555"} email={"blakeas12@gmail.com"} />
+        {
+          contacts.map((brother, index) => (
+            <Contact
+            key={index}
+            name={brother.FirstName + " " + brother.LastName}
+            phoneNumber={brother.PhoneNumber}
+            email={brother.Email}
+            />
+          ))
+        }
       </div>
 
       {/* Toolbar */}

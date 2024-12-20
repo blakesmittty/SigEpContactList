@@ -1,6 +1,8 @@
 package main
 
 import (
+	"archive/zip"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -8,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/gorilla/handlers"
@@ -128,6 +131,7 @@ func validateAccess(w http.ResponseWriter, r *http.Request) bool {
 
 func getContacts(w http.ResponseWriter, r *http.Request) {
 
+	fmt.Printf("Sending contacts: %v\n", contacts) // Debug
 	// if !validateAccess(w, r) {
 	//     return
 	// }
@@ -139,6 +143,143 @@ func getContacts(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "couldn't encode contacts", http.StatusInternalServerError)
 		log.Printf("error encoding and sending contacts to client: %v", err)
 	}
+}
+
+func downloadAll(w http.ResponseWriter, r *http.Request) {
+	// Debugging: Log that the handler is called
+	log.Println("downloadVcfAll handler called")
+
+	// Create a buffer to store the zip data
+	var zipBuffer bytes.Buffer
+
+	// Create a new zip writer
+	zipWriter := zip.NewWriter(&zipBuffer)
+
+	// Add the VCF file to the zip archive
+	vcfFile, err := zipWriter.Create("all-contacts.vcf")
+	if err != nil {
+		http.Error(w, "Error creating zip file", http.StatusInternalServerError)
+		log.Printf("Error creating zip entry: %v", err)
+		return
+	}
+
+	// Write VCF data to the zip file
+	for _, contact := range contacts {
+		_, err := vcfFile.Write([]byte(contact.ToVCF() + "\n"))
+		if err != nil {
+			http.Error(w, "Error writing VCF data to zip", http.StatusInternalServerError)
+			log.Printf("Error writing VCF data to zip: %v", err)
+			return
+		}
+	}
+
+	// Close the zip writer
+	err = zipWriter.Close()
+	if err != nil {
+		http.Error(w, "Error finalizing zip file", http.StatusInternalServerError)
+		log.Printf("Error closing zip writer: %v", err)
+		return
+	}
+
+	// Set headers for the zip file download
+	w.Header().Set("Content-Type", "application/zip")
+	w.Header().Set("Content-Disposition", `attachment; filename="contacts.zip"`)
+	w.Header().Set("Content-Length", fmt.Sprintf("%d", zipBuffer.Len()))
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("X-Suggested-Filename", "contacts.zip")
+
+	// Write the zip data to the response
+	_, err = w.Write(zipBuffer.Bytes())
+	if err != nil {
+		http.Error(w, "Error writing zip file to response", http.StatusInternalServerError)
+		log.Printf("Error writing zip data to response: %v", err)
+	}
+
+	// // if !validateAccess(w, r) {
+	// //     return
+	// // }
+}
+
+func downloadSelected(w http.ResponseWriter, r *http.Request) {
+	emails := r.URL.Query().Get("emails")
+	if emails == "" {
+		http.Error(w, "No contact IDs provided", http.StatusBadRequest)
+		log.Println("User supplied no contacts")
+		return
+	}
+
+	contactEmails := strings.Split(emails, ",")
+
+	var selectedContacts []Contact
+
+	for _, email := range contactEmails {
+		for _, contact := range contacts {
+			if email == contact.Email {
+				selectedContacts = append(selectedContacts, contact)
+				break
+			}
+		}
+	}
+
+	if len(selectedContacts) == 0 {
+		http.Error(w, "No matching contacts found", http.StatusNotFound)
+		return
+	}
+
+	var zipBuffer bytes.Buffer
+
+	zipWriter := zip.NewWriter(&zipBuffer)
+	vcfFile, err := zipWriter.Create("selected-contacts.vcf")
+	if err != nil {
+		http.Error(w, "Error creating zip file", http.StatusInternalServerError)
+		log.Printf("Error creating zip entry: %v", err)
+		return
+	}
+
+	for _, contact := range selectedContacts {
+		_, err := vcfFile.Write([]byte(contact.ToVCF() + "\r\n"))
+		if err != nil {
+			http.Error(w, "Error writing VCF data", http.StatusInternalServerError)
+			log.Printf("Error writing VCF data: %v", err)
+			return
+		}
+	}
+
+	// Finalize the ZIP archive
+	err = zipWriter.Close()
+	if err != nil {
+		http.Error(w, "Error finalizing zip file", http.StatusInternalServerError)
+		log.Printf("Error closing zip writer: %v", err)
+		return
+	}
+
+	// Set headers for the zip file download
+	w.Header().Set("Content-Type", "application/zip")
+	w.Header().Set("Content-Disposition", `attachment; filename="selected-contacts.zip"`)
+	w.Header().Set("Content-Length", fmt.Sprintf("%d", zipBuffer.Len()))
+	w.Header().Set("Cache-Control", "no-cache")
+
+	// Write the ZIP file to the response
+	_, err = w.Write(zipBuffer.Bytes())
+	if err != nil {
+		http.Error(w, "Error writing zip to response", http.StatusInternalServerError)
+		log.Printf("Error writing zip data to response: %v", err)
+	}
+
+}
+
+func (c Contact) ToVCF() string {
+	return fmt.Sprintf(
+		"BEGIN:VCARD\r\n"+
+			"VERSION:3.0\r\n"+
+			"FN:%s %s\r\n"+
+			"N:%s;%s;;;\r\n"+
+			"TEL;TYPE=CELL:%s\r\n"+
+			"EMAIL;TYPE=WORK:%s\r\n"+
+			"REV:%s\r\n"+
+			"END:VCARD\r\n",
+		c.FirstName, c.LastName, c.LastName, c.FirstName, c.PhoneNumber, c.Email, time.Now().Format("20060102T150405Z"),
+	)
 }
 
 func main() {
@@ -153,12 +294,15 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/contacts", getContacts)
+	mux.HandleFunc("/download-all", downloadAll)
+	mux.HandleFunc("/download-selected", downloadSelected)
 
 	corsHandler := handlers.CORS(
-		handlers.AllowedOrigins([]string{"http://localhost:3000"}),
+		//handlers.AllowedOrigins([]string{"http://localhost:3000", "https://f4d6-67-159-204-221.ngrok-free.app", "http://192.198.1.150:3000", "http://192.168.1.214", "http://192.168.1.*"}),
 		handlers.AllowedMethods([]string{"GET", "POST", "OPTIONS"}),
 		handlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
-		handlers.AllowCredentials(),
+		handlers.AllowedOrigins([]string{"*"}),
+		//handlers.AllowCredentials(),
 	)(mux)
 
 	log.Println("Server running on http://localhost:8080")

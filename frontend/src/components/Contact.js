@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { Plus, Check } from 'lucide-react'
 
-function Contact({phoneNumber, name, email}) {
+function Contact({PhoneNumber, FirstName, LastName, Email, onSelect}) {
 
     const [isAdded, setIsAdded] = useState(false);
 
     const handleClick = () => {
         setIsAdded(!isAdded);
+        onSelect({ PhoneNumber, FirstName, LastName, Email }, !isAdded);
     };
 
     return (
@@ -15,9 +16,9 @@ function Contact({phoneNumber, name, email}) {
         }`} 
         onClick={handleClick} >
           <div className="flex-grow">
-            <h3 className="text-lg font-semibold text-white">{name}</h3>
-            <p className="text-sm text-white">{email}</p>
-            <p className="text-sm text-white">{phoneNumber}</p>
+            <h3 className="text-lg font-semibold text-white">{FirstName + " " + LastName}</h3>
+            <p className="text-sm text-white">{Email}</p>
+            <p className="text-sm text-white">{PhoneNumber}</p>
           </div>
           <button
             className={`ml-4 p-2 rounded-full transition-colors duration-200 ${

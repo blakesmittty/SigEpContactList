@@ -293,9 +293,9 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/contacts", getContacts)
-	mux.HandleFunc("/download-all", downloadAll)
-	mux.HandleFunc("/download-selected", downloadSelected)
+	mux.HandleFunc("/api/contacts", getContacts)
+	mux.HandleFunc("/api/download-all", downloadAll)
+	mux.HandleFunc("/api/download-selected", downloadSelected)
 
 	corsHandler := handlers.CORS(
 		//handlers.AllowedOrigins([]string{"http://localhost:3000", "https://f4d6-67-159-204-221.ngrok-free.app", "http://192.198.1.150:3000", "http://192.168.1.214", "http://192.168.1.*"}),

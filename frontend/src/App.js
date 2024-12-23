@@ -26,7 +26,7 @@ function App() {
   };
 
   const getProdApiUrl = () => {
-    const path = "https://sig-ep-contact-list.vercel.app";
+    const path = "https://sig-ep-contact-list.vercel.app/api";
     return path;
   }
 

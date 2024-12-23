@@ -1,11 +1,11 @@
-import logo from './logo.svg';
+
 //import './App.css';
 import Contact from './components/Contact';
 import './index.css';
 import { useEffect, useState } from 'react';
 import ToolBar from './components/ToolBar';
 import Header from './components/Header';
-import { Home } from 'lucide-react';
+
 
 
 function App() {
@@ -13,17 +13,16 @@ function App() {
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedContacts, setSelectedContacts] = useState([]);
 
   // Get the API URL based on the current hostname
-  const getLocalApiUrl = () => {
-    const hostname = window.location.hostname;
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return 'http://localhost:8080';
-    }
-    // Use the local network IP address of your development machine
-    return `http://${window.location.hostname}:8080`;
-  };
+  // const getLocalApiUrl = () => {
+  //   const hostname = window.location.hostname;
+  //   if (hostname === 'localhost' || hostname === '127.0.0.1') {
+  //     return 'http://localhost:8080';
+  //   }
+  //   // Use the local network IP address of your development machine
+  //   return `http://${window.location.hostname}:8080`;
+  // };
 
   const getProdApiUrl = () => {
     const path = "https://sig-ep-contact-list.vercel.app/api";

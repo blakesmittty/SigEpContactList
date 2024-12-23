@@ -1,18 +1,16 @@
 import React, { useState } from "react";
 import { Plus, Check } from 'lucide-react'
 
-function Contact({PhoneNumber, FirstName, LastName, Email, onSelect}) {
-
-    const [isAdded, setIsAdded] = useState(false);
+function Contact({PhoneNumber, FirstName, LastName, Email, onSelect, IsSelected}) {
 
     const handleClick = () => {
-        setIsAdded(!isAdded);
-        onSelect({ PhoneNumber, FirstName, LastName, Email }, !isAdded);
+        //onSelect({ PhoneNumber, FirstName, LastName, Email }, true);
+        onSelect(!IsSelected); // Toggle the selection
     };
 
     return (
         <div className={` bg-black rounded-lg transition-colors duration-200 border-solid border-4 p-6 flex items-center justify-between w-full ${
-            isAdded ? "border-green-500" : "border-purple-500"
+            IsSelected ? "border-green-500" : "border-purple-500"
         }`} 
         onClick={handleClick} >
           <div className="flex-grow">
@@ -22,11 +20,11 @@ function Contact({PhoneNumber, FirstName, LastName, Email, onSelect}) {
           </div>
           <button
             className={`ml-4 p-2 rounded-full transition-colors duration-200 ${
-              isAdded ? 'bg-green-500 hover:bg-green-600' : 'bg-purple-500 hover:bg-purple-600'
+              IsSelected ? 'bg-green-500 hover:bg-green-600' : 'bg-purple-500 hover:bg-purple-600'
             }`}
-            aria-label={isAdded ? "Remove contact" : "Add contact"}
+            aria-label={IsSelected ? "Remove contact" : "Add contact"}
           >
-            {isAdded ? (
+            {IsSelected ? (
               <Check className="h-6 w-6 text-white" />
             ) : (
               <Plus className="h-6 w-6 text-white" />

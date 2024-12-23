@@ -25,7 +25,7 @@ type Contact struct {
 	FirstName   string `json:"FirstName"`
 	LastName    string `json:"LastName"`
 	PhoneNumber string `json:"PhoneNumber"`
-	Email       string `json;"Email"`
+	Email       string `json:"Email"`
 }
 
 // slice of contacts to be handed to the client side
@@ -37,12 +37,13 @@ var contacts []Contact
 func parseGoogleDrive() {
 
 	// get the application credentials for the service account in the google drive
+
 	serviceAccKey := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
 
 	ctx := context.Background()
 
 	// hook up to the communications folder
-	driveService, err := drive.NewService(ctx, option.WithCredentialsFile(serviceAccKey))
+	driveService, err := drive.NewService(ctx, option.WithCredentialsJSON([]byte(serviceAccKey)))
 	if err != nil {
 		log.Fatal("couldn't create google drive client")
 	}
@@ -72,7 +73,7 @@ func parseGoogleDrive() {
 // it then returns a slice of contacts to be sent to the client
 func gatherContacts(censusId string, ctx context.Context, serviceAccKey string) {
 
-	sheetsService, err := sheets.NewService(ctx, option.WithCredentialsFile(serviceAccKey))
+	sheetsService, err := sheets.NewService(ctx, option.WithCredentialsJSON([]byte(serviceAccKey)))
 	if err != nil {
 		log.Fatal("couldn't create google sheets client")
 	}
@@ -129,12 +130,8 @@ func validateAccess(w http.ResponseWriter, r *http.Request) bool {
 	return true
 }
 
+// getContacts is an API endpoint that sends the contacts slice to the client
 func getContacts(w http.ResponseWriter, r *http.Request) {
-
-	fmt.Printf("Sending contacts: %v\n", contacts) // Debug
-	// if !validateAccess(w, r) {
-	//     return
-	// }
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -145,17 +142,17 @@ func getContacts(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// downloadAll sends a .zip archive containing a .vcf file containing
+// all contacts to the client
 func downloadAll(w http.ResponseWriter, r *http.Request) {
-	// Debugging: Log that the handler is called
-	log.Println("downloadVcfAll handler called")
 
-	// Create a buffer to store the zip data
+	// create a buffer to store the zip data
 	var zipBuffer bytes.Buffer
 
-	// Create a new zip writer
+	// create a new zip writer
 	zipWriter := zip.NewWriter(&zipBuffer)
 
-	// Add the VCF file to the zip archive
+	// add the VCF file to the zip archive
 	vcfFile, err := zipWriter.Create("all-contacts.vcf")
 	if err != nil {
 		http.Error(w, "Error creating zip file", http.StatusInternalServerError)
@@ -163,7 +160,7 @@ func downloadAll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Write VCF data to the zip file
+	// write VCF data to the zip file
 	for _, contact := range contacts {
 		_, err := vcfFile.Write([]byte(contact.ToVCF() + "\n"))
 		if err != nil {
@@ -173,7 +170,7 @@ func downloadAll(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Close the zip writer
+	// close the zip writer
 	err = zipWriter.Close()
 	if err != nil {
 		http.Error(w, "Error finalizing zip file", http.StatusInternalServerError)
@@ -181,25 +178,24 @@ func downloadAll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Set headers for the zip file download
+	// set headers for the zip file download
 	w.Header().Set("Content-Type", "application/zip")
 	w.Header().Set("Content-Disposition", `attachment; filename="contacts.zip"`)
 	w.Header().Set("Content-Length", fmt.Sprintf("%d", zipBuffer.Len()))
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("X-Suggested-Filename", "contacts.zip")
 
-	// Write the zip data to the response
+	// write the zip data to the response
 	_, err = w.Write(zipBuffer.Bytes())
 	if err != nil {
 		http.Error(w, "Error writing zip file to response", http.StatusInternalServerError)
 		log.Printf("Error writing zip data to response: %v", err)
 	}
-
-	// // if !validateAccess(w, r) {
-	// //     return
-	// // }
 }
 
+// downloadSelected sends a .zip archive containing a .vcf of a
+// subset of contacts, in contacts, determined by the user
+// through a URI component
 func downloadSelected(w http.ResponseWriter, r *http.Request) {
 	emails := r.URL.Query().Get("emails")
 	if emails == "" {
@@ -212,6 +208,7 @@ func downloadSelected(w http.ResponseWriter, r *http.Request) {
 
 	var selectedContacts []Contact
 
+	// loop over emails sent by the client and contacts to find matches to add to .vcf file
 	for _, email := range contactEmails {
 		for _, contact := range contacts {
 			if email == contact.Email {
@@ -228,6 +225,7 @@ func downloadSelected(w http.ResponseWriter, r *http.Request) {
 
 	var zipBuffer bytes.Buffer
 
+	// initialize writer for the zip archive and make a vcf file
 	zipWriter := zip.NewWriter(&zipBuffer)
 	vcfFile, err := zipWriter.Create("selected-contacts.vcf")
 	if err != nil {
@@ -236,6 +234,7 @@ func downloadSelected(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// write each contact to the .vcf file
 	for _, contact := range selectedContacts {
 		_, err := vcfFile.Write([]byte(contact.ToVCF() + "\r\n"))
 		if err != nil {
@@ -245,7 +244,7 @@ func downloadSelected(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Finalize the ZIP archive
+	// finalize the ZIP archive
 	err = zipWriter.Close()
 	if err != nil {
 		http.Error(w, "Error finalizing zip file", http.StatusInternalServerError)
@@ -253,13 +252,13 @@ func downloadSelected(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Set headers for the zip file download
+	// set headers for the zip file download
 	w.Header().Set("Content-Type", "application/zip")
 	w.Header().Set("Content-Disposition", `attachment; filename="selected-contacts.zip"`)
 	w.Header().Set("Content-Length", fmt.Sprintf("%d", zipBuffer.Len()))
 	w.Header().Set("Cache-Control", "no-cache")
 
-	// Write the ZIP file to the response
+	// write the ZIP file to the response
 	_, err = w.Write(zipBuffer.Bytes())
 	if err != nil {
 		http.Error(w, "Error writing zip to response", http.StatusInternalServerError)
@@ -268,6 +267,7 @@ func downloadSelected(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// ToVCF formats a contact into a vcard entry
 func (c Contact) ToVCF() string {
 	return fmt.Sprintf(
 		"BEGIN:VCARD\r\n"+

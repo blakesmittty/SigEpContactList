@@ -13,9 +13,11 @@ function ToolBar({ onSearch, addSelected, addAll}) {
                 </button>
                 <button
                     onClick={addAll}
-                    className="transition-colors duration-200 bg-black hover:bg-purple-600 text-white font-semibold px-4 py-2 rounded-md flex-1 border-solid border-4 border-red-500"
+                    className="relative text-white font-semibold px-4 py-2 rounded-md flex-1 bg-black"
                 >
-                    Add All
+                    <span className="absolute inset-0 rounded-md bg-gradient-to-r from-purple-500  via-red-500 to-purple-500 animate-gradient-move bg-[length:200%_100%] shadow-[0_0_15px_rgba(236,72,153,0.5)] shadow-pink-500" />
+                    <span className="absolute inset-[4px] bg-black rounded-md transition-colors duration-200 hover:bg-purple-600" />
+                    <span className="relative">Add All</span>
                 </button>
             </div>
 

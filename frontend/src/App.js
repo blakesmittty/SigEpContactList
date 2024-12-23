@@ -16,7 +16,7 @@ function App() {
   const [selectedContacts, setSelectedContacts] = useState([]);
 
   // Get the API URL based on the current hostname
-  const getApiUrl = () => {
+  const getLocalApiUrl = () => {
     const hostname = window.location.hostname;
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
       return 'http://localhost:8080';
@@ -25,13 +25,18 @@ function App() {
     return `http://${window.location.hostname}:8080`;
   };
 
+  const getProdApiUrl = () => {
+    const path = "https://sig-ep-contact-list.vercel.app";
+    return path;
+  }
 
   useEffect(() => {
     const fetchContacts = async() => {
       try {
         //const resp = await fetch("http://localhost:8080/contacts");
         //const resp = await fetch("https://4604-67-159-204-221.ngrok-free.app/contacts");
-        const apiUrl = getApiUrl();
+        //const apiUrl = getApiUrl();
+        const apiUrl = getProdApiUrl();
         const resp = await fetch(`${apiUrl}/contacts`);
 
         if (!resp.ok) {
@@ -79,7 +84,7 @@ function App() {
       return;
     }
   
-    const apiUrl = getApiUrl();
+    const apiUrl = getProdApiUrl();
   
     // Prepare email list from selected contacts
     const contactIds = selectedContacts.map((contact) => contact.Email).join(',');
@@ -93,7 +98,7 @@ function App() {
   const downloadAll = () => {
     try {
       // Using window.location.href for direct download
-      const apiUrl = getApiUrl();
+      const apiUrl = getProdApiUrl();
       window.location.href = `${apiUrl}/download-all`;
     } catch (error) {
       console.error('Download failed:', error);

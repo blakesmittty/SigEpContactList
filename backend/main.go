@@ -305,7 +305,12 @@ func main() {
 		//handlers.AllowCredentials(),
 	)(mux)
 
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080" // Default port for local testing
+	}
+
 	log.Println("Server running on http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", corsHandler))
+	log.Fatal(http.ListenAndServe(":"+port, corsHandler))
 
 }

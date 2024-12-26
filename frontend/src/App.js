@@ -14,18 +14,18 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Get the API URL based on the current hostname
-  // const getLocalApiUrl = () => {
-  //   const hostname = window.location.hostname;
-  //   if (hostname === 'localhost' || hostname === '127.0.0.1') {
-  //     return 'http://localhost:8080';
-  //   }
-  //   // Use the local network IP address of your development machine
-  //   return `http://${window.location.hostname}:8080`;
-  // };
+  // Get the API URL based on the current hostnames
+  const getLocalApiUrl = () => {
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:8080';
+    }
+    // Use the local network IP address of your development machine
+    return `http://${window.location.hostname}:8080`;
+  };
 
   const getProdApiUrl = () => {
-    const path = "https://sig-ep-contact-list.vercel.app/api";
+    const path = "https://sig-ep-contact-list-9b6q.vercel.app";
     return path;
   }
 
@@ -34,9 +34,9 @@ function App() {
       try {
         //const resp = await fetch("http://localhost:8080/contacts");
         //const resp = await fetch("https://4604-67-159-204-221.ngrok-free.app/contacts");
-        //const apiUrl = getApiUrl();
+        //const apiUrl = getLocalApiUrl();
         const apiUrl = getProdApiUrl();
-        const resp = await fetch(`${apiUrl}/contacts`);
+        const resp = await fetch(`${apiUrl}/api/contacts`);
 
         if (!resp.ok) {
           throw new Error("Error fetching contacts")
@@ -83,13 +83,14 @@ function App() {
       return;
     }
   
+    //const apiUrl = getLocalApiUrl();
     const apiUrl = getProdApiUrl();
   
     // Prepare email list from selected contacts
     const contactIds = selectedContacts.map((contact) => contact.Email).join(',');
   
     // Initiate download
-    window.location.href = `${apiUrl}/download-selected?emails=${encodeURIComponent(contactIds)}`;
+    window.location.href = `${apiUrl}/api/download-selected?emails=${encodeURIComponent(contactIds)}`;
   
     console.log("Downloading selected contacts: ", contactIds);
   };
@@ -97,8 +98,10 @@ function App() {
   const downloadAll = () => {
     try {
       // Using window.location.href for direct download
+      //const apiUrl = getLocalApiUrl();
       const apiUrl = getProdApiUrl();
-      window.location.href = `${apiUrl}/download-all`;
+
+      window.location.href = `${apiUrl}/api/download-all`;
     } catch (error) {
       console.error('Download failed:', error);
     }

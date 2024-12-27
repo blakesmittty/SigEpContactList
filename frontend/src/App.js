@@ -43,7 +43,7 @@ function App() {
         }
         const data = await resp.json();
         const updatedData = data.map(contact => ({ ...contact, IsSelected: false }));
-        console.log("data: ", data)
+        //console.log("data: ", data)
         setContacts(updatedData);
       } catch (error) {
           setError(error.Message);
@@ -67,7 +67,7 @@ function App() {
 
   const handleSearch = (brotherName) => {
     setSearchTerm(brotherName);
-    console.log("Searching: " + brotherName);
+    //console.log("Searching: " + brotherName);
   };
 
   const filteredContacts = contacts.filter((brother) => {
@@ -91,8 +91,8 @@ function App() {
   
     // Initiate download
     window.location.href = `${apiUrl}/api/download-selected?emails=${encodeURIComponent(contactIds)}`;
-  
-    console.log("Downloading selected contacts: ", contactIds);
+    //debug
+    //console.log("Downloading selected contacts: ", contactIds);
   };
   
   const downloadAll = () => {

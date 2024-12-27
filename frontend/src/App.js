@@ -25,7 +25,7 @@ function App() {
   };
 
   const getProdApiUrl = () => {
-    const path = "http://18.218.110.35";
+    const path = "https://sigep.smitttysgarage.com";
     return path;
   }
 

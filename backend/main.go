@@ -301,14 +301,9 @@ func main() {
 		//handlers.AllowedOrigins([]string{"http://localhost:3000", "https://f4d6-67-159-204-221.ngrok-free.app", "http://192.198.1.150:3000", "http://192.168.1.214", "http://192.168.1.*"}),
 		handlers.AllowedMethods([]string{"GET", "POST", "OPTIONS"}),
 		handlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
-		handlers.AllowedOrigins([]string{"*"}),
+		handlers.AllowedOrigins([]string{"http://localhost:3000", "https://sig-ep-contact-list.vercel.app"}),
 		//handlers.AllowCredentials(),
 	)(mux)
-
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080" // Default port for local testing
-	}
 
 	log.Println("Server running on http://localhost:8080")
 	log.Fatal(http.ListenAndServe("0.0.0.0:8080", corsHandler))

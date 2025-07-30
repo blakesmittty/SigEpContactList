@@ -6,5 +6,3 @@ automate sheet retrieval (naming convention for census is census_??/??/????)
 
 account that is always able to access the drive
 	provide documentation for the google cloud console here
-
-comms folder id = 0B1y1z-eodsR-flZyTFhSZ3N4ZXJiMzVYVzJQUXZOYTl4RTN6a0FnUlVaSWd0YUFFd2FyaWs
